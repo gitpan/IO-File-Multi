@@ -1,19 +1,20 @@
 # *|* PERL *|*
 #
-# Print to multiple filehandles with one output call
+# Print to multiple filehandles with a single call
 #
 # File: Multi.pm
 #
 # Author: Nem W Schlecht
-# Last Modification: $Date: 1996/06/08 01:39:52 $
+# Last Modification: $Date: 1998/08/07 23:30:57 $
 #
-# $Id: Multi.pm,v 1.1 1996/06/08 01:39:52 nem Exp nem $
+# $Id: Multi.pm,v 1.1 1998/08/07 23:30:57 nem Exp $
 # $Log: Multi.pm,v $
-# Revision 1.1  1996/06/08 01:39:52  nem
+# Revision 1.1  1998/08/07 23:30:57  nem
 # Initial revision
 #
 #
-# Copyright (c) 1996 by Nem W Schlecht.  All rights reserved.
+#
+# Copyright © 1996 by Nem W Schlecht.  All rights reserved.
 # This is free software; you can distribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -21,13 +22,14 @@
 package IO::File::Multi;
 use strict;
 use IO::File;
+use Carp;
 
 use vars qw($VERSION);
-$VERSION='1.00';
+$VERSION='1.02';
 
 sub new {
     my($class)=shift;
-    return bless {}, $class;
+    return bless({}, $class);
 }
 
 #
@@ -35,7 +37,7 @@ sub new {
 sub open {
     my($self)=shift;
     my($fh)=new IO::File;
-    $fh->open(@_);
+    $fh->open(@_) || carp(ref($self), " - open failed: '@_'");
     push(@{$self->{handles}}, $fh);
 }
 
@@ -81,7 +83,7 @@ sub format_line_break_characters { my($I)=shift; $I->fh_st(@_); }
 sub format_formfeed { my($I)=shift; $I->fh_st(@_); }
 
 #
-# Multi don't do input (yet - and maybe it never will)
+# IO::File::Multi don't do input (yet - and maybe it never will)
 #
 #sub getline { my($I)=shift; $I->fh_st(@_); }
 #sub getlines { my($I)=shift; $I->fh_st(@_); }
@@ -131,8 +133,8 @@ Look at the B<SYNOPSIS> section.  Also, here is a simple implementation
 of the unix tee(1) program (non-append mode):
 
   #!/local/bin/perl
-  use Multi;
-  $mh=new Multi;
+  use IO::File::Multi;
+  $mh=new IO::File::Multi;
   $mh->open('>-');
   for (@ARGV) { $mh->open(">$_"); }
   while (<STDIN>) { $mh->print($_); }
@@ -145,6 +147,10 @@ In order to use fcntl(), fileno(), or flock() you'll have to access the
 filehandles yourself by calling members().  There's no write() yet (but I'm
 working on it!).  Also, any limitations to the IO::File module also apply
 here.
+
+It has been pointed out to me that multiple open() calls on the same file
+under MacOS will fail.  Hopefully, the carp() call will help with catching
+this.
 
 =head1 AUTHOR
 
